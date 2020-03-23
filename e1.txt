@@ -1,0 +1,43 @@
+probabilidad de bayes:
+
+p_viejo  = 0.9
+p_jove = 0.1
+
+p(1 | joven) = 0.95
+p(3 | joven) = 0.02
+p(!2 | joven) = 0.95
+p(!4 | joven) = 0.80
+
+
+considero que la probailidad de que a un joven le guste cualquiera de las estaciones es indep
+
+p(joven| 1 y 3 y !2 y !4) = p(1 y 3 joven) * p(joven) / p(1 y 3)
+
+
+luego:
+* p(1 y 3 | joven) = p(1 | joven) * p(3 | joven) = 0.95 * 0.02 = 0.019
+
+* p(joven) = 0.1
+
+por teorema de la prob total: 
+    * p(1 y 3) = p(1 y 3 | joven) * p(joven) + p(1 y 3 | viejo) * p(viejo)
+
+    * p(1 y 3 | viejo) = p(viejo | 1 y 3) * P(1 Y 3) / P(viejo) = [1 - p(joven | 1 y 3)] * p(1 y 3) / p(viejo)
+
+
+
+    p(1 y 3) = p(1 y 3 | joven) * p(joven) + [1 - p(joven | 1 y 3)] * p(1 y 3) 
+
+    [1  - [1 - p(joven | 1 y 3)] ] * p(1 y 3) = p(1 y 3 | joven) * p(joven)
+    
+    p(1 y 3) =  p(1 y 3 | joven) * p(joven) / [1  - [1 - p(joven | 1 y 3)] ] 
+
+
+
+p(joven| 1 y 3) = p(1 y 3 | joven) * p(joven) / p(1 y 3)
+
+=  0.019 * 0.1 / { 0.019 * 0.1 / [1  - [1 - p(joven | 1 y 3)] ] }
+
+= [1  - [1 - p(joven | 1 y 3)] ] = 1 - (1 - 0.019) = 0.019
+
+y la de que sea viejo sera el complemento => 0.981
