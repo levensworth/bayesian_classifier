@@ -8,7 +8,7 @@ LABEL_COL = 'Nacionalidad'
 '''
 # procedure:
 # calculate the relative frequency for each class
-# remeber the class (y value) is the last column 
+# remeber the class (y value) is the last column
 class_frequency = {}
 total_cases  = len(df[LABEL_COL])
 
@@ -50,7 +50,7 @@ for prob in var_prob:
 # now we calclate the probability for each label given X
 for label in posterior_prob.keys():
     for col in df.columns:
-        if col != LABEL_COL and x[col] == 1: 
+        if col != LABEL_COL and x[col] == 1:
             posterior_prob[label] *=  var_frequencies['{}|{}'.format(col, label)]
 
     posterior_prob[label] *= class_frequency['E']
@@ -62,7 +62,7 @@ for label in posterior_prob.keys():
 def calculate_class_frequency(df) :
     # procedure:
     # calculate the relative frequency for each class
-    # remeber the class (y value) is the last column 
+    # remeber the class (y value) is the last column
     class_frequency = {}
     total_cases  = len(df[LABEL_COL])
 
@@ -75,13 +75,31 @@ def calculate_var_relative_frequencies(df, class_frequency):
     # we need to calculate the relative frequency for each var
     var_frequencies = {}
 
+    correction_needed = False
     for label in class_frequency.keys():
         population = df[getattr(df, LABEL_COL) == label]
         population_size = len(population)
         # for the queried population, calculate each var frecquency
         for col in population.columns:
             if not(col == LABEL_COL):
-                var_frequencies['{}|{}'.format(col, label)] = len(population.query('{} == 1'.format(col))) / population_size
+                var_frequencies['{}|{}'.format(col, label)] =  len(population.query('{} == 1'.format(col))) / population_size
+                correction_needed = True if var_frequencies['{}|{}'.format(col, label)] == 0 else False
+
+# if everything is okey and no probability is 0 we return
+    if not correction_needed:
+        return var_frequencies
+
+# we calculate the var frequency applying the laplace correction
+# TODO: verify laplace correction.
+    var_frequencies = {}
+    n_classes = len(class_frequency.keys())
+    for label in class_frequency.keys():
+        population = df[getattr(df, LABEL_COL) == label]
+        population_size = len(population)
+        # for the queried population, calculate each var frecquency
+        for col in population.columns:
+            if not(col == LABEL_COL):
+                var_frequencies['{}|{}'.format(col, label)] =  (len(population.query('{} == 1'.format(col))) + 1) / (population_size + n_classes)
 
     return var_frequencies
 
@@ -107,7 +125,7 @@ def run_inference(df, x, class_frequency, var_frequencies, var_prob):
     # now we calclate the probability for each label given X
     for label in posterior_prob.keys():
         for col in df.columns:
-            if col != LABEL_COL and x[col] == 1: 
+            if col != LABEL_COL and x[col] == 1:
                 posterior_prob[label] *=  var_frequencies['{}|{}'.format(col, label)]
 
         posterior_prob[label] *= class_frequency[label]
