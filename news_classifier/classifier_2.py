@@ -3,10 +3,23 @@ import numpy as np
 import random
 import operator
 from sklearn.metrics import confusion_matrix
+import pprint
 
 CATEGORIES = ['Internacional','Nacional',
 'Destacadas','Deportes','Salud','Ciencia y Tecnologia',
 'Entretenimiento','Economia', 'Noticias destacadas']
+
+NORM_PERCENTAGES = {
+    'Internacional': 1,
+    'Nacional': 1,
+    'Destacadas': 1,
+    'Deportes': 1,
+    'Salud':1,
+    'Ciencia y Tecnologia': 1,
+    'Entretenimiento': 1,
+    'Economia': 1,
+    'Noticias destacadas': 0.02
+    }
 
 
 def load_data(path, separator=',', encoding='ISO-8859-1'):
@@ -36,8 +49,7 @@ def normalize_data(df, axis_name, categories):
         category_df = df.query('index in {}'.format(selected))
         norm_data = pd.concat([norm_data, category_df])
 
-
-    return df
+    return norm_data
 
 def train_test_split(df, test_percentage):
     '''
@@ -47,20 +59,20 @@ def train_test_split(df, test_percentage):
     count = len(df)
     train_count = int(test_percentage * count)
     total_indexes = df.index.tolist()
-    train_indexes = random.choices(total_indexes, k=train_count)
+    train_indexes = random.sample(total_indexes, k=train_count)
     train_df = df.query('index in {}'.format(train_indexes))
-    test_indexes = list(set(total_indexes) - set(train_indexes))
-    test_df = df.query('index in {}'.format(test_indexes))
+    test_df = df.drop(train_indexes)
     return train_df, test_df
 
 
 class NaiveBayes(object):
 
-    def __init__(self, df):
+    def __init__(self, df, epsilon):
         self.df = df
         tokens, vocabulary = self.tokenize(df)
         self.tokens = tokens
         self.vocabulary = vocabulary
+        self.epsilon = epsilon
 
     def tokenize(self, df):
         '''
@@ -132,8 +144,8 @@ class NaiveBayes(object):
         for k, v in self.categories_prob.items():
             inference[k] = float(v)
             for word in vec:
-                # extract epsilon
-                inference[k] *= float(self.conditional_prob.get('{}|{}'.format(word.lower(), k), 0.0001))
+
+                inference[k] *= float(self.conditional_prob.get('{}|{}'.format(word.lower(), k), self.epsilon))
         return inference
 
     def categories_to_numeric(self, categories):
@@ -164,7 +176,15 @@ class NaiveBayes(object):
 
         accuracy = (tp + tn) / (example_count)
         presicion = (tp) / (tp + fp)
-        return accuracy, presicion
+        recall = tp/float(tp + fn)
+        metrics = {
+           'acc': accuracy,
+           'presicion': presicion,
+           'tp_rate': recall,
+           'fp_rate':  fn/ float(fn + tn),
+           'f1': (2.0 * presicion * recall)/ (presicion + recall)
+        }
+        return metrics
 
     def test(self, sentences, categories):
         '''
@@ -189,36 +209,28 @@ class NaiveBayes(object):
         # presicion = tp/tp + fp
         accuracy = {}
         presicion = {}
-
+        true_positive_rate = {}
+        false_positive_rate = {}
+        f1_score = {}
         for i in range(len(CATEGORIES)):
-            acc, pr = self.calculate_metrics(matrix, len(categories), i)
-            accuracy[CATEGORIES[i]] = acc
-            presicion[CATEGORIES[i]] = pr
+            metrics = self.calculate_metrics(matrix, len(categories), i)
+            accuracy[CATEGORIES[i]] = metrics['acc']
+            presicion[CATEGORIES[i]] = metrics['presicion']
+            true_positive_rate[CATEGORIES[i]] = metrics['tp_rate']
+            false_positive_rate[CATEGORIES[i]] = metrics['fp_rate']
+            f1_score[CATEGORIES[i]] = metrics['f1']
 
-        return matrix, accuracy, presicion
+        metrics = {
+            'accuracy': accuracy,
+            'presicion': presicion,
+            'tp_rate': true_positive_rate,
+            'fp_rate': false_positive_rate,
+            'f1_score': f1_score
+        }
+        return matrix, metrics
 
 
-
-def main():
-    path = './data/Noticias_argentinas.csv'
-    data = load_data(path, ';')
-    categories = {
-    'Internacional': 1,
-    'Nacional': 1,
-    'Destacadas': 1,
-    'Deportes': 1,
-    'Salud':1,
-    'Ciencia y Tecnologia': 1,
-    'Entretenimiento': 1,
-    'Economia': 1,
-    'Noticias destacadas': 0.028
-    }
-    # normalize data, try to get equal amount of data for each class
-    norm_data = normalize_data(data, 'categoria', categories)
-    train_data, test_data = train_test_split(norm_data, 0.8)
-    print('train size: {} \n test size: {}'.format(len(train_data), len(test_data)))
-    # create classifier
-    classifier = NaiveBayes(train_data)
+def show_train(classifier, test_data):
     # train the classifier to understand each class
     classifier.train(CATEGORIES)
     test_data.dropna()
@@ -233,23 +245,30 @@ def main():
         except IndexError:
             break
 
-
-    conf_matrix, accuracy, presicion = classifier.test(sentences, categories)
+    conf_matrix, metrics = classifier.test(sentences, categories)
 
     print('Confussion matrix')
     print(conf_matrix)
 
-    print('accuracy for each category')
-    print(accuracy)
+    print('metrics')
+    pprint.pprint(metrics)
 
-    print('precision for each category')
-    print(presicion)
-    # inference = classifier.infer('Si los mercados votan, votaron ya por Macri')
+def main():
+    path = './data/Noticias_argentinas.csv'
+    data = load_data(path, ';')
 
-    # max_class = max(inference.items(), key=operator.itemgetter(1))[0]
-    # print(max_class)
+    # normalize data, try to get equal amount of data for each class
+    norm_data = normalize_data(data, 'categoria', NORM_PERCENTAGES)
+    train_data, test_data = train_test_split(norm_data, 0.8)
+    print('train size: {} \n test size: {}'.format(len(train_data), len(test_data)))
+    # create classifier
+    classifier = NaiveBayes(train_data, 0.0000001)
+    # show results
+    show_train(classifier, test_data)
 
 
 if __name__ == '__main__':
     main()
+
+
 

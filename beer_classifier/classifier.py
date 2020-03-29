@@ -1,63 +1,13 @@
 import pandas as pd
 import numpy as np
 
-#  laod data from csv
+#  configs
 DATA_PATH = './data/PreferenciasBritanicos.csv'
 LABEL_COL = 'Nacionalidad'
 
-'''
-# procedure:
-# calculate the relative frequency for each class
-# remeber the class (y value) is the last column
-class_frequency = {}
-total_cases  = len(df[LABEL_COL])
-
-for person in df[LABEL_COL]:
-    class_frequency[person] = (class_frequency.get(person, 0) + 1) / total_cases
-
-# we need to calculate the relative frequency for each var
-var_frequencies = {}
-
-for label in class_frequency.keys():
-    population = df[df.Nacionalidad == label]
-    population_size = len(population)
-    # for the queried population, calculate each var frecquency
-    for col in population.columns:
-        if not(col == LABEL_COL):
-            var_frequencies['{}|{}'.format(col, label)] = len(population.query('{} == 1'.format(col))) / population_size
-
-
-# calculate the frequency for each variabel, given the training set
-var_prob = {}
-for col in df.columns:
-    if not(col == LABEL_COL):
-        var_prob[col] = len(df.query('{} == 1'.format(col))) / total_cases
-
-# now the inference
-# P(Scottish | var_vec) = P(var_vec | Scottish) * P(Scottish) / P(var_vec)
-
-
-# init posterior prob
-posterior_prob = {}
-for label in class_frequency.keys():
-    posterior_prob[label] = 1
-
-# probabily of the given situation even happening
-x_prob = 1
-for prob in var_prob:
-    x_prob *= var_prob[prob] if x[prob] == 1 else (1 - var_prob[prob])
-
-# now we calclate the probability for each label given X
-for label in posterior_prob.keys():
-    for col in df.columns:
-        if col != LABEL_COL and x[col] == 1:
-            posterior_prob[label] *=  var_frequencies['{}|{}'.format(col, label)]
-
-    posterior_prob[label] *= class_frequency['E']
-
-    posterior_prob[label] /= x_prob
-'''
-
+# TODO: we are assuming that all the possible labels are given in the train set
+# thus, if you only give positive examples the classifier will never yeld a negative.
+# As it doesn't know the existance of that label.
 
 def calculate_class_frequency(df) :
     # procedure:
@@ -90,16 +40,16 @@ def calculate_var_relative_frequencies(df, class_frequency):
         return var_frequencies
 
 # we calculate the var frequency applying the laplace correction
-# TODO: verify laplace correction.
     var_frequencies = {}
-    n_classes = len(class_frequency.keys())
+
     for label in class_frequency.keys():
         population = df[getattr(df, LABEL_COL) == label]
         population_size = len(population)
+        n_classes = len(population.columns) # represents all the cardinal of the attribute universe for the given class
         # for the queried population, calculate each var frecquency
         for col in population.columns:
             if not(col == LABEL_COL):
-                var_frequencies['{}|{}'.format(col, label)] =  (len(population.query('{} == 1'.format(col))) + 1) / (population_size + n_classes)
+                var_frequencies['{}|{}'.format(col, label)] = (len(population.query('{} == 1'.format(col))) + 1) / (population_size + n_classes)
 
     return var_frequencies
 
