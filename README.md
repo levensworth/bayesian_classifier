@@ -10,7 +10,7 @@
 
 
 
-# Dependencies:
+## Dependencies:
 * pip3
 * linux terminal (mac included)
 
