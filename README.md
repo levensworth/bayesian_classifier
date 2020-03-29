@@ -1,5 +1,5 @@
 # ITBA ML: Baysian Classifier.
-## The goal for this project is to be a POC for a naïve bayesian text classifier and a Bayesian network.
+### The goal for this project is to be a POC for a naïve bayesian text classifier and a Bayesian network.
 
 
 ## How TO:
