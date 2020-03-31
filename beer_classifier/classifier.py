@@ -68,9 +68,9 @@ def run_inference(df, x, class_frequency, var_frequencies, var_prob):
         posterior_prob[label] = 1
 
     # probabily of the given situation even happening
-    x_prob = 1
-    for prob in var_prob:
-        x_prob *= var_prob[prob] if x[prob] == 1 else (1 - var_prob[prob])
+    # x_prob = 1
+    # for prob in var_prob:
+    #     x_prob *= var_prob[prob] if x[prob] == 1 else (1 - var_prob[prob])
 
     # now we calclate the probability for each label given X
     for label in posterior_prob.keys():
@@ -80,7 +80,7 @@ def run_inference(df, x, class_frequency, var_frequencies, var_prob):
 
         posterior_prob[label] *= class_frequency[label]
 
-        posterior_prob[label] /= x_prob
+        # posterior_prob[label] /= x_prob
     return posterior_prob
 
 def main(X):
