@@ -149,7 +149,7 @@ class BayesianNetwork(object):
             parents = set(convination) - no_parents
 
             cases = self.probabilities.get('{}'.format(node.key)).get('{}'.format(node.value))
-            dep_prob = 1.0
+            dep_prob = 0.0
             for case, val in cases.items():
                 is_valid_case = True
                 while len(parents) > 0 and is_valid_case:
@@ -332,10 +332,12 @@ df = get_data('data/inscriptions.csv')
 
 net.train(df)
 
-rank_1 = Node('srank', 1, [1])
+rank_1 = Node('srank', 2, [2])
+gre_1 = Node('gre', 1, [1])
+gpa_1 = Node('gpa', 1, [1])
 
 accepted = Node('admit', 1, [1])
 
-result = net.infer([accepted], [rank_1])
+result = net.infer([accepted], [rank_1, gpa_1, gre_1])
 
 print(result)
