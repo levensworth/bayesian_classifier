@@ -4,6 +4,9 @@ import random
 import operator
 from sklearn.metrics import confusion_matrix
 import pprint
+import json
+import matplotlib.pyplot as plt
+
 
 CATEGORIES = ['Internacional','Nacional',
 'Destacadas','Deportes','Salud','Ciencia y Tecnologia',
@@ -20,6 +23,8 @@ NORM_PERCENTAGES = {
     'Economia': 1,
     'Noticias destacadas': 0.02
     }
+
+EPSILON = 0.00001
 
 
 def load_data(path, separator=',', encoding='ISO-8859-1'):
@@ -220,17 +225,19 @@ class NaiveBayes(object):
             false_positive_rate[CATEGORIES[i]] = metrics['fp_rate']
             f1_score[CATEGORIES[i]] = metrics['f1']
 
+
         metrics = {
             'accuracy': accuracy,
             'presicion': presicion,
             'tp_rate': true_positive_rate,
             'fp_rate': false_positive_rate,
-            'f1_score': f1_score
+            'f1_score': f1_score,
+            'roc_point': (false_positive_rate, true_positive_rate)
         }
         return matrix, metrics
 
 
-def show_train(classifier, test_data):
+def show_train(classifier, test_data, metric_path):
     # train the classifier to understand each class
     classifier.train(CATEGORIES)
     test_data.dropna()
@@ -250,8 +257,10 @@ def show_train(classifier, test_data):
     print('Confussion matrix')
     print(conf_matrix)
 
-    print('metrics')
-    pprint.pprint(metrics)
+
+    with open(metric_path, 'w') as f:
+        json.dump(metrics, f)
+
 
 def main():
     path = './data/Noticias_argentinas.csv'
@@ -259,13 +268,45 @@ def main():
 
     # normalize data, try to get equal amount of data for each class
     norm_data = normalize_data(data, 'categoria', NORM_PERCENTAGES)
-    train_data, test_data = train_test_split(norm_data, 0.8)
+    train_data, test_data = train_test_split(norm_data, 0.85)
     print('train size: {} \n test size: {}'.format(len(train_data), len(test_data)))
     # create classifier
-    classifier = NaiveBayes(train_data, 0.0000001)
+    classifier = NaiveBayes(train_data, EPSILON)
     # show results
-    show_train(classifier, test_data)
+    show_train(classifier, test_data, 'metrics_85.json')
 
+    while False:
+        title = input('enter a title: ')
+        result = classifier.infer(title)
+        print('results')
+        pprint.pprint(result)
+
+
+def plot_graphs( paths = ['metrics_7.json', 'metrics_75.json', 'metrics_8.json', 'metrics_85.json', 'metrics_9.json']):
+
+    classes = {}
+    for path in paths:
+        with open(path, 'r') as f:
+            metrics = json.load(f)
+            roc = metrics['roc_point']
+            index = 'x'
+            for axis in roc:
+                for k, v in axis.items():
+                    cls_series = classes.get(k, {'x': [], 'y': []})
+                    cls_series[index].append(v)
+                    classes[k] = cls_series
+                index = 'y'
+
+    for k in classes.keys():
+        fig, ax = plt.subplots()
+        ax.plot(classes[k]['x'], classes[k]['y'], 'bo')
+
+        ax.set(xlabel='false positive rate', ylabel='false negative rate',
+            title='ROC graph for {} class'.format(k))
+        ax.grid()
+
+        fig.savefig("{}.png".format(k))
+        plt.show()
 
 if __name__ == '__main__':
     main()
