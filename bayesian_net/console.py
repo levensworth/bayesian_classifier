@@ -43,4 +43,8 @@ accepted = Node('admit', 1, [1])
 
 result = net.infer([accepted], [rank_1, gpa_1, gre_1])
 
-print(result)
+print('[RESULT] {} %'.format(result))
+
+# E1) 0.6821215806194527
+# E2) 0.3137895144997041
+
