@@ -58,11 +58,12 @@ class BayesianNetwork(object):
         probabilities = {}
         universe_size = len(df)
         for value in node.universe:
-            selected_cases = df[getattr(df, node.key) == value]
-            probabilities['{}'.format(value)] = self.recursive_search_parents_value(selected_cases, parents.copy(), universe_size)
+            # selected_cases = df[getattr(df, node.key) == value]
+            node.value = value
+            probabilities['{}'.format(value)] = self.recursive_search_parents_value(df, node, parents.copy(), universe_size)
         return probabilities
 
-    def recursive_search_parents_value(self, df, parents, univers_size, case_key=None):
+    def recursive_search_parents_value(self, df, child, parents, univers_size, case_key=None):
         parent = parents.pop()
         # this was a dataframe
         probabilities = {}
@@ -70,8 +71,9 @@ class BayesianNetwork(object):
             # this gives you the amount of cases which satisfies all restrictions
             key = case_key
             for last_val in parent.universe:
-                cases = len(df[getattr(df, parent.key) == last_val])
-
+                cases = df[getattr(df, parent.key) == last_val]
+                selected_cases = len(cases[getattr(df, child.key) == child.value])
+                cases = len(cases)
                 if key != None:
                     key = '{},{}={}'.format(case_key, parent.key, last_val)
                 else:
@@ -81,16 +83,17 @@ class BayesianNetwork(object):
 
                 probabilities[key] = prob if prob > 0 else 0.00001
             return probabilities
+
         key = case_key
         for parent_value in parent.universe:
             filter_df = df[getattr(df, parent.key) == parent_value]
-            print(len(df))
+
             if key != None:
                 case_key = '{},{}={}'.format(case_key, parent.key, parent_value)
             else:
                 case_key = '{}={}'.format(parent.key, parent_value)
 
-            probabilities.update(self.recursive_search_parents_value(filter_df, parents.copy(), univers_size, case_key))
+            probabilities.update(self.recursive_search_parents_value(filter_df, child, parents.copy(), univers_size, case_key))
 
         return probabilities
 
@@ -322,12 +325,11 @@ dag.add_vertex(rank, gre)
 dag.add_vertex(rank, gpa)
 dag.add_vertex(gre, accepted)
 dag.add_vertex(gpa, accepted)
+dag.add_vertex(rank, accepted)
 
 net = BayesianNetwork(dag)
 
 df = get_data('data/inscriptions.csv')
-
-print(df.head())
 
 net.train(df)
 
