@@ -81,15 +81,16 @@ class BayesianNetwork(object):
 
                 probabilities[key] = prob if prob > 0 else 0.00001
             return probabilities
-
+        key = case_key
         for parent_value in parent.universe:
-            df = df[getattr(df, parent.key) == parent_value]
-            if case_key != None:
+            filter_df = df[getattr(df, parent.key) == parent_value]
+            print(len(df))
+            if key != None:
                 case_key = '{},{}={}'.format(case_key, parent.key, parent_value)
             else:
                 case_key = '{}={}'.format(parent.key, parent_value)
 
-            probabilities.update(self.recursive_search_parents_value(df, parents.copy(), univers_size, case_key))
+            probabilities.update(self.recursive_search_parents_value(filter_df, parents.copy(), univers_size, case_key))
 
         return probabilities
 
