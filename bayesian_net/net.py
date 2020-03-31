@@ -74,12 +74,12 @@ class BayesianNetwork(object):
                 cases = df[getattr(df, parent.key) == last_val]
                 selected_cases = len(cases[getattr(df, child.key) == child.value])
                 cases = len(cases)
-                if key != None:
+                if case_key != None:
                     key = '{},{}={}'.format(case_key, parent.key, last_val)
                 else:
                     key = '{}={}'.format(parent.key, last_val)
 
-                prob = float(cases) / univers_size
+                prob = float(selected_cases) / univers_size
 
                 probabilities[key] = prob if prob > 0 else 0.00001
             return probabilities
@@ -87,13 +87,12 @@ class BayesianNetwork(object):
         key = case_key
         for parent_value in parent.universe:
             filter_df = df[getattr(df, parent.key) == parent_value]
-
-            if key != None:
-                case_key = '{},{}={}'.format(case_key, parent.key, parent_value)
+            if case_key != None:
+                key = '{},{}={}'.format(case_key, parent.key, parent_value)
             else:
-                case_key = '{}={}'.format(parent.key, parent_value)
+                key = '{}={}'.format(parent.key, parent_value)
 
-            probabilities.update(self.recursive_search_parents_value(filter_df, child, parents.copy(), univers_size, case_key))
+            probabilities.update(self.recursive_search_parents_value(filter_df, child, parents.copy(), univers_size, key))
 
         return probabilities
 
@@ -159,7 +158,7 @@ class BayesianNetwork(object):
                         is_valid_case = False
 
                 if is_valid_case:
-                    dep_prob *= val
+                    dep_prob += val
             prob *= dep_prob
 
         return prob
