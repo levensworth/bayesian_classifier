@@ -1,6 +1,7 @@
 import pandas as pd
 from net import BayesianNetwork, Dag, Node
-
+# good intro to bayesian nets
+# https://towardsdatascience.com/introduction-to-bayesian-networks-81031eeed94e
 
 def get_data(path):
     df = pd.read_csv(path)

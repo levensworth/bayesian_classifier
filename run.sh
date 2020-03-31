@@ -7,4 +7,4 @@ echo 'activating venv'
 echo 'installing requirements.txt'
 pip install -r requirements.txt
 echo 'start cli ...'
-python news_classifier/classifier_2.py
+python $1
