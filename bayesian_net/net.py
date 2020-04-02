@@ -47,7 +47,7 @@ class BayesianNetwork(object):
 
         for case in total_cases:
             positive_cases = len(df.query('{} == {}'.format(node.key, case)))
-            probabilites['{}={}'.format(node.key, case)] = positive_cases / float(len(df))
+            probabilites['{}={}'.format(node.key, case)] = (positive_cases + 1 )/ float(len(df) + len(node.universe))
         return probabilites
 
     def calculate_conditional_probability(self, df, node, parents):
