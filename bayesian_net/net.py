@@ -79,9 +79,9 @@ class BayesianNetwork(object):
                 else:
                     key = '{}={}'.format(parent.key, last_val)
 
-                prob = float(selected_cases) / univers_size
+                prob = float(selected_cases + 1) / (univers_size + len(child.universe))
 
-                probabilities[key] = prob if prob > 0 else 0.00001
+                probabilities[key] = prob
             return probabilities
 
         key = case_key
