@@ -109,8 +109,6 @@ class NaiveBayes(object):
             for word in title_vec:
                 category_dict[word.lower()] = category_dict.get(word.lower(), 0 ) + 1
             tokens[row['categoria']] = category_dict
-
-
         return tokens, vocabulary
 
     def calculate_categories_prob(self, categories):
@@ -124,33 +122,61 @@ class NaiveBayes(object):
 
     def calculate_conditional_prob(self, categories):
         probabilities = {}
-        for category in categories:
-            category_word_count = sum(self.tokens.get(category, dict()).values())
-            for word in self.vocabulary:
-                probabilities['{}|{}'.format(word, category)] = self.calculate_conditional_word_vec(word, category_word_count, category)
+        
+        for word in self.vocabulary:
+    
+            probabilities['{}'.format(word)] = self.calculate_conditional_word_vec(word, categories)
 
         return probabilities
 
-    def calculate_conditional_word_vec(self, word, category_word_count, category):
+    def calculate_conditional_word_vec(self, word, categories):
         '''
         calculate the probabilty of P[word | category]
         '''
-        word_count = self.tokens.get(category, dict()).get(word, 0)
-        return (word_count + 1) / float(category_word_count + len(self.vocabulary))
+        prob = {}
+        for category in categories:
+            category_word_count = len(self.tokens.get(category, dict()).values())
+            word_count = self.tokens.get(category, dict()).get(word, 0)
+            prob[category] = (word_count + 1) / float(category_word_count + len(self.vocabulary) )
 
+        return prob
     def train(self, categories):
         self.categories = categories
-        self.conditional_prob = self.calculate_conditional_prob(categories)
         self.categories_prob = self.calculate_categories_prob(categories)
+        self.conditional_prob = self.calculate_conditional_prob(categories)
+        
+
+    def get_sentce_probability(self, sentece_vec):
+        '''Calculate the probabilty of a given sentece to exist'''
+        prob = 1
+
+        for word in sentece_vec:
+            word_prob = 1/len(self.vocabulary) # prob de una palabra nueva que nunca vi
+            for prob_cat in self.conditional_prob.get(word.lower(), dict()).values():
+                word_prob += prob_cat
+            prob *= word_prob
+        return prob
 
     def infer(self, sentece):
         vec = sentece.split(' ')
         inference = {}
+        sent_prob = self.get_sentce_probability(vec)
         for k, v in self.categories_prob.items():
             inference[k] = float(v)
+            sentence_prob = 1
             for word in vec:
+                # sentence_prob *= float(self.conditional_prob.get('{}|{}'.format(word.lower(), k), 1/len(self.vocabulary)))
+                sentence_prob *= float(self.conditional_prob.get('{}'.format(word.lower()), dict()).get(k, 1/len(self.vocabulary)))
 
-                inference[k] *= float(self.conditional_prob.get('{}|{}'.format(word.lower(), k), self.epsilon))
+            inference[k] *= sentence_prob
+            inference[k] /=  sent_prob
+        
+        # normalize values to represent a probability
+
+        total_prob = sum(inference.values())
+        for k in inference.keys():
+            inference[k] /= total_prob
+
         return inference
 
     def categories_to_numeric(self, categories):
@@ -235,3 +261,88 @@ class NaiveBayes(object):
             'roc_point': (false_positive_rate, true_positive_rate)
         }
         return matrix, metrics
+
+
+
+
+
+
+
+
+
+def show_train(classifier, test_data, metric_path):
+    # train the classifier to understand each class
+    classifier.train(CATEGORIES)
+    test_data.dropna()
+    categories = test_data.categoria.tolist()
+    sentences = test_data.titular.tolist()
+
+    for i in range(len(categories)-1):
+        try:
+            if not(categories[i] in CATEGORIES):
+                categories.pop(i)
+                sentences.pop(i)
+        except IndexError:
+            break
+
+    conf_matrix, metrics = classifier.test(sentences, categories)
+
+    print('Confussion matrix')
+    print(conf_matrix)
+
+
+    with open(metric_path, 'w') as f:
+        json.dump(metrics, f)
+
+
+def main():
+    path = './data/Noticias_argentinas.csv'
+    data = load_data(path, ';')
+
+    # normalize data, try to get equal amount of data for each class
+    norm_data = normalize_data(data, 'categoria', NORM_PERCENTAGES)
+    train_data, test_data = train_test_split(norm_data, 0.85)
+    print('train size: {} \n test size: {}'.format(len(train_data), len(test_data)))
+    # create classifier
+    classifier = NaiveBayes(train_data, EPSILON)
+    # show results
+    show_train(classifier, test_data, 'metrics_85.json')
+
+    while False:
+        title = input('enter a title: ')
+        result = classifier.infer(title)
+        print('results')
+        pprint.pprint(result)
+
+
+def plot_graphs( paths = ['metrics_7.json', 'metrics_75.json', 'metrics_8.json', 'metrics_85.json', 'metrics_9.json']):
+
+    classes = {}
+    for path in paths:
+        with open(path, 'r') as f:
+            metrics = json.load(f)
+            roc = metrics['roc_point']
+            index = 'x'
+            for axis in roc:
+                for k, v in axis.items():
+                    cls_series = classes.get(k, {'x': [], 'y': []})
+                    cls_series[index].append(v)
+                    classes[k] = cls_series
+                index = 'y'
+
+    for k in classes.keys():
+        fig, ax = plt.subplots()
+        ax.plot(classes[k]['x'], classes[k]['y'], 'bo')
+
+        ax.set(xlabel='false positive rate', ylabel='false negative rate',
+            title='ROC graph for {} class'.format(k))
+        ax.grid()
+
+        fig.savefig("{}.png".format(k))
+        plt.show()
+
+if __name__ == '__main__':
+    main()
+
+
+
