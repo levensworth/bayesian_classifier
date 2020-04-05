@@ -1,0 +1,81 @@
+{
+  "accuracy": {
+    "Internacional": 0.9442267108833283,
+    "Nacional": 0.924630690382876,
+    "Destacadas": 0.8887548990051252,
+    "Deportes": 0.9620138679529695,
+    "Salud": 0.9876394332227917,
+    "Ciencia y Tecnologia": 0.9846246608381067,
+    "Entretenimiento": 0.9761832981609888,
+    "Economia": 0.9680434127223395,
+    "Noticias destacadas": 0.8776002411817908
+  },
+  "presicion": {
+    "Internacional": 0.8571428571428571,
+    "Nacional": 0.7142857142857143,
+    "Destacadas": 0.4318181818181818,
+    "Deportes": 0.8782894736842105,
+    "Salud": 0.9655172413793104,
+    "Ciencia y Tecnologia": 0.9335038363171355,
+    "Entretenimiento": 0.915625,
+    "Economia": 0.8973607038123167,
+    "Noticias destacadas": 1.0
+  },
+  "tp_rate": {
+    "Internacional": 0.5746478873239437,
+    "Nacional": 0.47277936962750716,
+    "Destacadas": 0.05234159779614325,
+    "Deportes": 0.75,
+    "Salud": 0.9205479452054794,
+    "Ciencia y Tecnologia": 0.9358974358974359,
+    "Entretenimiento": 0.8492753623188406,
+    "Economia": 0.8116710875331565,
+    "Noticias destacadas": 0.026378896882494004
+  },
+  "fp_rate": {
+    "Internacional": 0.011478730587440918,
+    "Nacional": 0.02223719676549865,
+    "Destacadas": 0.008463100880162491,
+    "Deportes": 0.012495778453225262,
+    "Salud": 0.0040650406504065045,
+    "Ciencia y Tecnologia": 0.008882815169115136,
+    "Entretenimiento": 0.00908479138627187,
+    "Economia": 0.011904761904761904,
+    "Noticias destacadas": 0.0
+  },
+  "f1_score": {
+    "Internacional": 0.6880269814502529,
+    "Nacional": 0.5689655172413792,
+    "Destacadas": 0.09336609336609336,
+    "Deportes": 0.809090909090909,
+    "Salud": 0.9424964936886396,
+    "Ciencia y Tecnologia": 0.9346991037131882,
+    "Entretenimiento": 0.881203007518797,
+    "Economia": 0.8523676880222842,
+    "Noticias destacadas": 0.051401869158878497
+  },
+  "roc_point": [
+    {
+      "Internacional": 0.011478730587440918,
+      "Nacional": 0.02223719676549865,
+      "Destacadas": 0.008463100880162491,
+      "Deportes": 0.012495778453225262,
+      "Salud": 0.0040650406504065045,
+      "Ciencia y Tecnologia": 0.008882815169115136,
+      "Entretenimiento": 0.00908479138627187,
+      "Economia": 0.011904761904761904,
+      "Noticias destacadas": 0.0
+    },
+    {
+      "Internacional": 0.5746478873239437,
+      "Nacional": 0.47277936962750716,
+      "Destacadas": 0.05234159779614325,
+      "Deportes": 0.75,
+      "Salud": 0.9205479452054794,
+      "Ciencia y Tecnologia": 0.9358974358974359,
+      "Entretenimiento": 0.8492753623188406,
+      "Economia": 0.8116710875331565,
+      "Noticias destacadas": 0.026378896882494004
+    }
+  ]
+}

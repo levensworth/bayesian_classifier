@@ -72,12 +72,13 @@ def train_test_split(df, test_percentage):
 
 class NaiveBayes(object):
 
-    def __init__(self, df, epsilon):
+    def __init__(self, df, epsilon, decision_boundary):
         self.df = df
         tokens, vocabulary = self.tokenize(df)
         self.tokens = tokens
         self.vocabulary = vocabulary
         self.epsilon = epsilon
+        self.decision_boundary = decision_boundary
 
     def tokenize(self, df):
         '''
@@ -122,9 +123,9 @@ class NaiveBayes(object):
 
     def calculate_conditional_prob(self, categories):
         probabilities = {}
-        
+
         for word in self.vocabulary:
-    
+
             probabilities['{}'.format(word)] = self.calculate_conditional_word_vec(word, categories)
 
         return probabilities
@@ -144,7 +145,7 @@ class NaiveBayes(object):
         self.categories = categories
         self.categories_prob = self.calculate_categories_prob(categories)
         self.conditional_prob = self.calculate_conditional_prob(categories)
-        
+
 
     def get_sentce_probability(self, sentece_vec):
         '''Calculate the probabilty of a given sentece to exist'''
@@ -170,7 +171,7 @@ class NaiveBayes(object):
 
             inference[k] *= sentence_prob
             inference[k] /=  sent_prob
-        
+
         # normalize values to represent a probability
 
         total_prob = sum(inference.values())
@@ -196,10 +197,11 @@ class NaiveBayes(object):
         # calculate false negative
         for i in matrix[index]:
             fn += i
+        fn -= matrix[index, index]
 
         # calculate false positive
         for i in range(len(matrix)):
-            fp += matrix[index][i]
+            fp += matrix[i][index]
 
         fp -= tp
         # calculate true negative
@@ -212,12 +214,12 @@ class NaiveBayes(object):
            'acc': accuracy,
            'presicion': presicion,
            'tp_rate': recall,
-           'fp_rate':  fn/ float(fn + tn),
+           'fp_rate':  fp/ float(fp + tn),
            'f1': (2.0 * presicion * recall)/ (presicion + recall)
         }
         return metrics
 
-    def test(self, sentences, categories):
+    def test(self, sentences, categories, boundary):
         '''
         sentences: list of sentences
         categories: actual category for each, same index, sentence
@@ -229,12 +231,15 @@ class NaiveBayes(object):
         predicted = []
         for sentence in sentences:
             inference = self.infer(sentence)
-            max_class = max(inference.items(), key=operator.itemgetter(1))[0]
-            predicted.append(max_class)
+            max_class = max(inference.items(), key=operator.itemgetter(1))
+            if max_class[1] > boundary:
+                predicted.append(max_class[0])
+            else:
+                predicted.append('NONE')
 
         # calculate confussion_matrix
-        matrix = confusion_matrix(categories, predicted, labels=CATEGORIES)
-
+        possible = CATEGORIES + ['NONE']
+        matrix = confusion_matrix(categories, predicted, labels=possible)
         # calculate accuracy and presicion
         # accuracy = tp + tn /total
         # presicion = tp/tp + fp
@@ -263,14 +268,7 @@ class NaiveBayes(object):
         return matrix, metrics
 
 
-
-
-
-
-
-
-
-def show_train(classifier, test_data, metric_path):
+def show_train(classifier, test_data, boundary, metric_path):
     # train the classifier to understand each class
     classifier.train(CATEGORIES)
     test_data.dropna()
@@ -285,7 +283,7 @@ def show_train(classifier, test_data, metric_path):
         except IndexError:
             break
 
-    conf_matrix, metrics = classifier.test(sentences, categories)
+    conf_matrix, metrics = classifier.test(sentences, categories, boundary)
 
     print('Confussion matrix')
     print(conf_matrix)
@@ -304,9 +302,10 @@ def main():
     train_data, test_data = train_test_split(norm_data, 0.85)
     print('train size: {} \n test size: {}'.format(len(train_data), len(test_data)))
     # create classifier
-    classifier = NaiveBayes(train_data, EPSILON)
+    classifier = NaiveBayes(train_data, EPSILON, 0.3)
     # show results
-    show_train(classifier, test_data, 'metrics_85.json')
+    for i in [0.1,0.2,0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.95]:
+        show_train(classifier, test_data, i, 'metrics_{}.json'.format(i))
 
     while False:
         title = input('enter a title: ')
@@ -315,7 +314,7 @@ def main():
         pprint.pprint(result)
 
 
-def plot_graphs( paths = ['metrics_7.json', 'metrics_75.json', 'metrics_8.json', 'metrics_85.json', 'metrics_9.json']):
+def plot_graphs( paths = ['metrics_0.1.json', 'metrics_0.2.json', 'metrics_0.3.json', 'metrics_0.4.json', 'metrics_0.5.json', 'metrics_0.6.json', 'metrics_0.7.json', 'metrics_0.75.json', 'metrics_0.8.json', 'metrics_0.85.json', 'metrics_0.95.json']):
 
     classes = {}
     for path in paths:
@@ -332,9 +331,11 @@ def plot_graphs( paths = ['metrics_7.json', 'metrics_75.json', 'metrics_8.json',
 
     for k in classes.keys():
         fig, ax = plt.subplots()
-        ax.plot(classes[k]['x'], classes[k]['y'], 'bo')
+        plt.ylim(0, 1)
+        plt.xlim(0, 1)
+        ax.plot(classes[k]['x'], classes[k]['y'])
 
-        ax.set(xlabel='false positive rate', ylabel='false negative rate',
+        ax.set(xlabel='false positive rate', ylabel='true positive rate',
             title='ROC graph for {} class'.format(k))
         ax.grid()
 
@@ -343,6 +344,7 @@ def plot_graphs( paths = ['metrics_7.json', 'metrics_75.json', 'metrics_8.json',
 
 if __name__ == '__main__':
     main()
+    plot_graphs()
 
 
 
